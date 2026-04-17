@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>艺境工坊 · 原创设计商店 | Supabase 版</title>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* ========== 完整保留第一个设计的样式 ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0c12;
+            font-family: 'Poppins', system-ui, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+            color: #f0f3fa;
+            scroll-behavior: smooth;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e1f2c;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3b82f6;
+            border-radius: 12px;
+        }
+
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* 头部导航 */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 0;
+            flex-wrap: wrap;
+            gap: 1rem;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FFFFFF, #60a5fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.5px;
+        }
+        .logo span {
+            background: none;
+            color: #3b82f6;
+        }
+        .tagline {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            letter-spacing: 0.3px;
+        }
+
+        /* 轮播图 */
+        .hero-carousel {
+            margin: 2rem 0 3rem 0;
+            border-radius: 2rem;
+            overflow: hidden;
+            box-shadow: 0 25px 40px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            border-radius: 1.8rem;
+        }
+        .carousel-track {
+            display: flex;
+            transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .carousel-slide {
+            flex: 0 0 100%;
+            min-height: 380px;
+            background: linear-gradient(145deg, #11161f, #0b0e17);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            backdrop-filter: blur(2px);
+        }
+        .slide-content {
+            text-align: center;
+            max-width: 700px;
+            padding: 2rem;
+            z-index: 2;
+        }
+        .slide-content i {
+            font-size: 3.5rem;
+            color: #3b82f6;
+            margin-bottom: 1rem;
+        }
+        .slide-content h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(120deg, #fff, #90cdf4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 1rem;
+        }
+        .slide-content p {
+            font-size: 1.1rem;
+            color: #cbd5e6;
+            margin-bottom: 1.5rem;
+        }
+        .slide-btn {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid #3b82f6;
+            padding: 0.7rem 1.8rem;
+            border-radius: 40px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            backdrop-filter: blur(4px);
+        }
+        .slide-btn:hover {
+            background: #3b82f6;
+            box-shadow: 0 0 12px #3b82f6;
+        }
+        .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            width: 44px;
+            height: 44px;
+            border-radius: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: 0.2s;
+            color: white;
+            font-size: 1.4rem;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .carousel-btn:hover {
+            background: #3b82f6;
+            border-color: white;
+        }
+        .btn-left { left: 20px; }
+        .btn-right { right: 20px; }
+        .dots {
+            position: absolute;
+            bottom: 18px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            z-index: 10;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .dot.active {
+            background: #3b82f6;
+            width: 28px;
+            border-radius: 12px;
+        }
+
+        /* 分类栏 */
+        .category-search-bar {
+            background: rgba(18, 22, 35, 0.7);
+            backdrop-filter: blur(8px);
+            border-radius: 3rem;
+            padding: 0.8rem 1.5rem;
+            margin: 1.5rem 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.8rem;
+            border: 1px solid #2d3a5e;
+        }
+        .category-chip {
+            background: #1e293b;
+            padding: 0.5rem 1.2rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+        .category-chip.active {
+            background: #3b82f6;
+            box-shadow: 0 0 8px #3b82f6;
+        }
+        .add-cat-form {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+        }
+        .add-cat-form input {
+            background: #0f1222;
+            border: 1px solid #3b82f6;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            color: white;
+            outline: none;
+        }
+        .add-cat-form button {
+            background: #3b82f6;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            color: white;
+            cursor: pointer;
+        }
+
+        /* 商家上传面板 */
+        .seller-panel {
+            background: rgba(18, 22, 35, 0.7);
+            backdrop-filter: blur(8px);
+            border-radius: 2rem;
+            border: 1px solid rgba(59,130,246,0.3);
+            padding: 1.8rem 2rem;
+            margin: 2rem 0 2.5rem;
+        }
+        .upload-zone {
+            border: 2px dashed #3b82f6;
+            border-radius: 1.5rem;
+            background: rgba(0,0,0,0.2);
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+        }
+        .upload-zone:hover {
+            background: rgba(59,130,246,0.1);
+        }
+        .upload-zone i {
+            font-size: 3rem;
+            color: #3b82f6;
+            margin-bottom: 1rem;
+        }
+        .upload-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            align-items: flex-end;
+        }
+        .form-group {
+            flex: 1;
+            min-width: 150px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.7rem;
+            margin-bottom: 4px;
+            color: #94a3b8;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            background: #0a0e17;
+            border: 1px solid #334155;
+            padding: 0.6rem;
+            border-radius: 1rem;
+            color: white;
+        }
+        .image-preview {
+            margin-top: 8px;
+            font-size: 0.7rem;
+            color: #60a5fa;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: linear-gradient(95deg, #3b82f6, #2563eb);
+            border: none;
+            padding: 0.6rem 1.5rem;
+            border-radius: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+        }
+
+        /* 商品网格 */
+        .gallery-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 2rem 0 1rem;
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+        }
+        .gallery-title i {
+            color: #3b82f6;
+            font-size: 2rem;
+        }
+        .design-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 2rem;
+            margin-top: 1rem;
+            margin-bottom: 3rem;
+        }
+        .design-card {
+            background: #11151f;
+            border-radius: 1.8rem;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s;
+            box-shadow: 0 12px 28px -8px rgba(0,0,0,0.5);
+            border: 1px solid rgba(59,130,246,0.2);
+            backdrop-filter: blur(2px);
+        }
+        .design-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 28px 40px -12px #3b82f640;
+            border-color: #3b82f6;
+        }
+        .card-img {
+            background: #070b12;
+            padding: 1.5rem;
+            text-align: center;
+            height: 210px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .card-img img {
+            max-width: 100%;
+            max-height: 180px;
+            object-fit: contain;
+            border-radius: 1rem;
+        }
+        .card-info {
+            padding: 1.2rem;
+        }
+        .file-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            background: #1e293b;
+            padding: 0.3rem 0.8rem;
+            border-radius: 30px;
+            display: inline-block;
+        }
+        .price-control, .desc-control {
+            background: #0a0e17;
+            padding: 0.5rem 0.9rem;
+            border-radius: 1.2rem;
+            margin: 0.6rem 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .price-input, .desc-input {
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 0.4rem 0.8rem;
+            border-radius: 2rem;
+            color: white;
+        }
+        .price-input { width: 110px; }
+        .desc-input { flex: 1; }
+        .card-buttons {
+            display: flex;
+            gap: 0.8rem;
+            margin-top: 0.5rem;
+        }
+        .btn-buy {
+            background: linear-gradient(95deg, #3b82f6, #2563eb);
+            border: none;
+            padding: 0.6rem 0;
+            border-radius: 2rem;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            flex: 2;
+        }
+        .btn-delete {
+            background: #1e293b;
+            border: 1px solid #475569;
+            padding: 0.6rem 0;
+            border-radius: 2rem;
+            color: #facc15;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        /* 底部 */
+        .footer {
+            margin-top: 4rem;
+            background: #06080f;
+            border-radius: 2rem 2rem 0 0;
+            padding: 2rem;
+            text-align: center;
+        }
+        .contact-info {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        .copyright {
+            font-size: 0.7rem;
+            color: #6c7a91;
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+        }
+        .modal.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        .modal-content {
+            background: #11151f;
+            max-width: 400px;
+            width: 90%;
+            border-radius: 2rem;
+            padding: 2rem;
+            border: 1px solid #3b82f6;
+        }
+        .toast-msg {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #111827e6;
+            backdrop-filter: blur(8px);
+            padding: 0.7rem 1.5rem;
+            border-radius: 40px;
+            color: white;
+            z-index: 2000;
+            font-size: 0.9rem;
+            pointer-events: none;
+            transition: 0.2s;
+        }
+        .empty-grid {
+            text-align: center;
+            grid-column: 1/-1;
+            padding: 3rem;
+            background: #0f1220;
+            border-radius: 2rem;
+        }
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #3b82f6;
+            padding: 0.5rem 1.2rem;
+            border-radius: 2rem;
+            color: white;
+            cursor: pointer;
+        }
+        .user-badge {
+            background: #1e293b;
+            padding: 0.5rem 1.2rem;
+            border-radius: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        @media (max-width: 720px) {
+            .container { padding: 0 1rem; }
+            .category-search-bar { flex-direction: column; align-items: stretch; }
+            .add-cat-form { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="navbar">
+        <div>
+            <div class="logo">ART<span>FLUX</span></div>
+            <div class="tagline">✦ 原创设计 · 灵感变现 ✦</div>
+        </div>
+        <div id="authArea" class="auth-buttons"></div>
+    </div>
+
+    <!-- 轮播图 -->
+    <div class="hero-carousel">
+        <div class="carousel-container">
+            <div class="carousel-track" id="carouselTrack">
+                <div class="carousel-slide"><div class="slide-content"><i class="fas fa-bolt"></i><h2>限时灵感爆发</h2><p>上传设计图即享专属曝光</p><button class="slide-btn" id="mockAdBtn1">立即入驻</button></div></div>
+                <div class="carousel-slide"><div class="slide-content"><i class="fas fa-gem"></i><h2>数字艺术新浪潮</h2><p>每张设计都是孤品</p><button class="slide-btn" id="mockAdBtn2">探索作品集</button></div></div>
+                <div class="carousel-slide"><div class="slide-content"><i class="fas fa-chart-line"></i><h2>设计师扶持计划</h2><p>高额佣金 & 版权保护</p><button class="slide-btn" id="mockAdBtn3">了解详情</button></div></div>
+            </div>
+            <div class="carousel-btn btn-left" id="prevBtn"><i class="fas fa-chevron-left"></i></div>
+            <div class="carousel-btn btn-right" id="nextBtn"><i class="fas fa-chevron-right"></i></div>
+            <div class="dots" id="carouselDots"></div>
+        </div>
+    </div>
+
+    <!-- 分类栏 -->
+    <div class="category-search-bar" id="categoryBar"></div>
+
+    <!-- 商家上传面板（仅商家可见） -->
+    <div id="sellerPanel" style="display: none;" class="seller-panel">
+        <h3><i class="fas fa-cloud-upload-alt"></i> 发布新设计</h3>
+        <div class="upload-zone" id="uploadZone">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>点击或拖拽上传设计图 (JPG/PNG/WEBP/GIF)</p>
+            <div class="upload-hint">支持单张图片，每张图独立设置金额与说明</div>
+            <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,image/gif">
+        </div>
+        <div class="upload-form">
+            <div class="form-group"><label>作品名称</label><input type="text" id="productName" placeholder="例如: 赛博科技VI"></div>
+            <div class="form-group"><label>价格 (¥)</label><input type="number" id="productPrice" placeholder="0.00" step="0.01"></div>
+            <div class="form-group"><label>分类</label><select id="productCategory"></select></div>
+            <div class="form-group"><label>详细说明</label><input type="text" id="productDesc" placeholder="商用授权 / 源文件格式"></div>
+            <button class="btn-primary" id="uploadProductBtn">发布设计</button>
+        </div>
+        <div id="imagePreview" class="image-preview"></div>
+    </div>
+
+    <div class="gallery-title">
+        <i class="fas fa-store"></i>
+        <span>灵感市集 · 即刻选购</span>
+        <span id="filterHint" class="search-info" style="font-size:0.8rem; margin-left:auto;"></span>
+    </div>
+    <div id="designGrid" class="design-grid"></div>
+</div>
+
+<footer class="footer">
+    <div id="contactInfo" class="contact-info"></div>
+    <div class="copyright">© 2025 ArtFlux Studio — 原创设计交易平台 | 数据云端存储</div>
+</footer>
+
+<div id="paymentModal" class="modal">
+    <div class="modal-content">
+        <h3><i class="fas fa-credit-card"></i> 模拟支付</h3>
+        <p id="payInfo">商品信息</p>
+        <input type="text" placeholder="卡号 4242 4242 4242 4242" style="width:100%; margin:10px 0; padding:8px; border-radius:20px;">
+        <div style="display: flex; gap:10px;">
+            <button id="confirmPayBtn" class="btn-primary">确认支付 ¥<span id="payAmount">0</span></button>
+            <button id="closeModalBtn" class="btn-outline">取消</button>
+        </div>
+        <p style="font-size:0.7rem;">*演示模式，点击确认即购买成功</p>
+    </div>
+</div>
+<div id="toastMsg" class="toast-msg">✨ 提示</div>
+
+<script>
+    // ========== 请替换为您的 Supabase 配置 ==========
+    const SUPABASE_URL = "https://lmpwmokevzndwyzwwlyb.supabase.co";      // 替换为您的项目 URL
+    const SUPABASE_KEY = "sb_publishable_4xEQhrl0k5dPUPHvb8Fzgg_6aZlWYyk";        // 替换为您的 anon public key
+    // ================================================
+    
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    // 全局变量
+    let currentUser = null;
+    let currentFilter = null;
+    let allCategories = [];
+    let allProducts = [];
+    
+    // DOM 元素
+    const authArea = document.getElementById('authArea');
+    const sellerPanel = document.getElementById('sellerPanel');
+    const categoryBar = document.getElementById('categoryBar');
+    const designGrid = document.getElementById('designGrid');
+    const productCategorySelect = document.getElementById('productCategory');
+    const uploadBtn = document.getElementById('uploadProductBtn');
+    const fileInput = document.getElementById('fileInput');
+    const uploadZone = document.getElementById('uploadZone');
+    const previewDiv = document.getElementById('imagePreview');
+    const toast = document.getElementById('toastMsg');
+    
+    let toastTimer = null;
+    function showMessage(text, isError = false) {
+        if (toastTimer) clearTimeout(toastTimer);
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(-50%) scale(1)';
+        toast.style.backgroundColor = isError ? '#b91c1ce6' : '#0f172ae6';
+        toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${text}`;
+        toastTimer = setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-50%) scale(0.9)';
+        }, 2800);
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+    }
+    
+    // ---------- 数据加载 ----------
+    async function loadCategories() {
+        const { data, error } = await supabase.from('categories').select('*').order('name');
+        if (!error) {
+            allCategories = data;
+            renderCategoryBar();
+            updateCategorySelect();
+        }
+    }
+    
+    async function loadProducts() {
+        let query = supabase.from('products').select('*').order('created_at', { ascending: false });
+        if (currentFilter) {
+            query = query.eq('category_id', currentFilter);
+        }
+        const { data, error } = await query;
+        if (!error) {
+            allProducts = data;
+            renderProducts();
+        }
+    }
+    
+    async function createCategory(name) {
+        const { error } = await supabase.from('categories').insert({ name });
+        if (!error) {
+            await loadCategories();
+            showMessage(`分类“${name}”创建成功`);
+        } else {
+            showMessage(error.message || '创建失败', true);
+        }
+    }
+    
+    async function deleteProduct(id) {
+        const { error } = await supabase.from('products').delete().eq('id', id);
+        if (!error) {
+            await loadProducts();
+            showMessage('已删除');
+        }
+    }
+    
+    // 上传图片到 Supabase Storage
+    async function uploadImage(file) {
+        const ext = file.name.split('.').pop();
+        const fileName = `${Date.now()}.${ext}`;
+        const { data, error } = await supabase.storage.from('products').upload(fileName, file);
+        if (error) throw error;
+        const { data: urlData } = supabase.storage.from('products').getPublicUrl(fileName);
+        return urlData.publicUrl;
+    }
+    
+    async function publishProduct(name, price, description, categoryId, imageFile) {
+        try {
+            const imageUrl = await uploadImage(imageFile);
+            const { error } = await supabase.from('products').insert({
+                name, price, description,
+                image_url: imageUrl,
+                category_id: categoryId,
+                seller_id: currentUser?.id || 'seller'
+            });
+            if (!error) {
+                await loadProducts();
+                showMessage('商品已上架');
+                return true;
+            } else {
+                showMessage(error.message, true);
+                return false;
+            }
+        } catch (err) {
+            showMessage('图片上传失败', true);
+            return false;
+        }
+    }
+    
+    // ---------- UI 渲染 ----------
+    function renderCategoryBar() {
+        const isSeller = currentUser && currentUser.role === 'seller';
+        let html = `<div class="category-chip ${currentFilter === null ? 'active' : ''}" data-cat="all">✨ 全部</div>`;
+        allCategories.forEach(c => {
+            html += `<div class="category-chip ${currentFilter === c.id ? 'active' : ''}" data-cat="${c.id}">${escapeHtml(c.name)}</div>`;
+        });
+        if (isSeller) {
+            html += `<div class="add-cat-form" id="addCatForm">
+                        <input type="text" id="newCatName" placeholder="新分类名" maxlength="12">
+                        <button id="createCatBtn" class="btn-outline" style="padding:0.3rem 1rem;"><i class="fas fa-plus"></i> 创建分类</button>
+                    </div>`;
+        }
+        categoryBar.innerHTML = html;
+        // 筛选事件
+        document.querySelectorAll('.category-chip[data-cat]').forEach(el => {
+            el.addEventListener('click', () => {
+                const val = el.dataset.cat;
+                currentFilter = val === 'all' ? null : val;
+                renderCategoryBar();
+                loadProducts();
+                const filterName = currentFilter ? allCategories.find(c => c.id === currentFilter)?.name : '全部';
+                document.getElementById('filterHint').innerText = currentFilter ? `当前分类：${filterName}` : '';
+            });
+        });
+        if (isSeller) {
+            const createBtn = document.getElementById('createCatBtn');
+            if (createBtn) {
+                createBtn.onclick = () => {
+                    const name = document.getElementById('newCatName').value.trim();
+                    if (name) createCategory(name);
+                    else showMessage('请输入分类名', true);
+                };
+            }
+        }
+    }
+    
+    function updateCategorySelect() {
+        productCategorySelect.innerHTML = allCategories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+    }
+    
+    function renderProducts() {
+        if (allProducts.length === 0) {
+            designGrid.innerHTML = `<div class="empty-grid"><i class="fas fa-cloud-upload-alt" style="font-size:3rem;"></i><p>✨ 暂无设计图，商家请登录后上传 ✨</p></div>`;
+            return;
+        }
+        const isSeller = currentUser && currentUser.role === 'seller';
+        const currentUserId = currentUser?.id;
+        designGrid.innerHTML = allProducts.map(p => {
+            const cat = allCategories.find(c => c.id === p.category_id);
+            const canDelete = isSeller && (p.seller_id === currentUserId || true); // 简化
+            return `
+                <div class="design-card">
+                    <div class="card-img"><img src="${p.image_url}" alt="${escapeHtml(p.name)}" onerror="this.src='https://picsum.photos/id/1/200/150'"></div>
+                    <div class="card-info">
+                        <div class="file-title"><i class="fas fa-image"></i> ${escapeHtml(p.name)}</div>
+                        <div class="price-control"><label><i class="fas fa-tag"></i> 金额</label><span class="currency">¥</span><input class="price-input" type="number" step="0.01" value="${p.price}" disabled></div>
+                        <div class="desc-control"><label><i class="fas fa-pen"></i> 说明</label><input class="desc-input" type="text" value="${escapeHtml(p.description)}" disabled></div>
+                        <div class="card-buttons">
+                            <button class="btn-buy" data-id="${p.id}" data-price="${p.price}" data-name="${escapeHtml(p.name)}"><i class="fas fa-shopping-cart"></i> 立即购买</button>
+                            ${canDelete ? `<button class="btn-delete" data-id="${p.id}"><i class="fas fa-trash-alt"></i> 删除</button>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        // 购买事件
+        document.querySelectorAll('.btn-buy').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.dataset.id;
+                const product = allProducts.find(p => p.id == id);
+                if (product) openPayment(product);
+            });
+        });
+        // 删除事件
+        document.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (confirm('确定删除？')) deleteProduct(btn.dataset.id);
+            });
+        });
+    }
+    
+    // 支付模态框
+    let pendingProduct = null;
+    const payModal = document.getElementById('paymentModal');
+    function openPayment(product) {
+        pendingProduct = product;
+        document.getElementById('payInfo').innerHTML = `购买：${product.name}<br>金额 ¥${product.price.toFixed(2)}`;
+        document.getElementById('payAmount').innerText = product.price.toFixed(2);
+        payModal.classList.add('active');
+    }
+    function closeModal() { payModal.classList.remove('active'); pendingProduct = null; }
+    async function confirmPayment() {
+        if (!pendingProduct) return;
+        if (!currentUser) {
+            showMessage('请先登录', true);
+            closeModal();
+            return;
+        }
+        // 模拟订单记录（可选）
+        await supabase.from('orders').insert({
+            user_name: currentUser.username,
+            product_id: pendingProduct.id,
+            amount: pendingProduct.price,
+            status: 'paid'
+        });
+        showMessage(`🎉 支付成功！您已购买「${pendingProduct.name}”`);
+        closeModal();
+    }
+    document.getElementById('confirmPayBtn')?.addEventListener('click', confirmPayment);
+    document.getElementById('closeModalBtn')?.addEventListener('click', closeModal);
+    
+    // ---------- 图片上传预览 ----------
+    function setupUpload() {
+        uploadZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) return showMessage('请选择图片', true);
+            if (file.size > 5 * 1024 * 1024) return showMessage('图片不能超过5MB', true);
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                previewDiv.innerHTML = `<i class="fas fa-check-circle"></i> 图片已选择 <img src="${ev.target.result}" style="max-width:60px; border-radius:6px;">`;
+            };
+            reader.readAsDataURL(file);
+        });
+        uploadZone.addEventListener('dragover', e => e.preventDefault());
+        uploadZone.addEventListener('drop', e => {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                fileInput.files = fileInput.files;
+                fileInput.dispatchEvent(new Event('change'));
+            }
+        });
+    }
+    
+    uploadBtn.addEventListener('click', async () => {
+        if (!currentUser || currentUser.role !== 'seller') return showMessage('请登录商家账号', true);
+        const name = document.getElementById('productName').value.trim();
+        const price = parseFloat(document.getElementById('productPrice').value);
+        const categoryId = productCategorySelect.value;
+        const desc = document.getElementById('productDesc').value.trim();
+        const file = fileInput.files[0];
+        if (!file) return showMessage('请选择图片', true);
+        if (!name || isNaN(price) || !categoryId) return showMessage('请完整填写信息', true);
+        const success = await publishProduct(name, price, desc, categoryId, file);
+        if (success) {
+            document.getElementById('productName').value = '';
+            document.getElementById('productPrice').value = '';
+            document.getElementById('productDesc').value = '';
+            fileInput.value = '';
+            previewDiv.innerHTML = '';
+        }
+    });
+    
+    // ---------- 用户认证（简化本地模拟）----------
+    let users = [];
+    function initUsers() {
+        const stored = localStorage.getItem('artflux_users');
+        if (stored) users = JSON.parse(stored);
+        else {
+            users = [
+                { id: 'u1', username: '商家小艺', password: '123456', role: 'seller' },
+                { id: 'u2', username: '普通用户', password: '123456', role: 'buyer' }
+            ];
+            localStorage.setItem('artflux_users', JSON.stringify(users));
+        }
+        const saved = localStorage.getItem('artflux_currentUser');
+        if (saved) currentUser = JSON.parse(saved);
+        renderAuth();
+        renderSellerPanel();
+    }
+    function saveUsers() { localStorage.setItem('artflux_users', JSON.stringify(users)); }
+    function saveCurrentUser() { if (currentUser) localStorage.setItem('artflux_currentUser', JSON.stringify(currentUser)); else localStorage.removeItem('artflux_currentUser'); }
+    
+    function renderAuth() {
+        if (currentUser) {
+            authArea.innerHTML = `<div class="user-badge"><i class="fas fa-user-circle"></i> ${currentUser.username} (${currentUser.role === 'seller' ? '商家' : '买家'}) <button id="logoutBtn" class="btn-outline" style="margin-left:8px;">退出</button></div>`;
+            document.getElementById('logoutBtn')?.addEventListener('click', () => {
+                currentUser = null;
+                saveCurrentUser();
+                renderAuth();
+                renderSellerPanel();
+                showMessage('已退出');
+            });
+        } else {
+            authArea.innerHTML = `<button class="btn-outline" id="loginBtn">登录 / 注册</button>`;
+            document.getElementById('loginBtn')?.addEventListener('click', showLoginModal);
+        }
+    }
+    
+    function showLoginModal() {
+        const action = prompt("输入 1 登录 | 2 注册", "1");
+        if (action === "1") {
+            const username = prompt("用户名 (商家小艺 / 普通用户)");
+            const pwd = prompt("密码 (123456)");
+            const user = users.find(u => u.username === username && u.password === pwd);
+            if (user) {
+                currentUser = user;
+                saveCurrentUser();
+                renderAuth();
+                renderSellerPanel();
+                loadProducts();
+                showMessage(`欢迎回来，${username}`);
+            } else showMessage("用户名或密码错误", true);
+        } else if (action === "2") {
+            const newUser = prompt("新用户名");
+            if (!newUser) return;
+            if (users.find(u => u.username === newUser)) return showMessage("用户名已存在", true);
+            const role = prompt("角色: 1 买家 | 2 商家", "1") === "2" ? 'seller' : 'buyer';
+            const pwd = prompt("密码 (默认123456)", "123456");
+            const newId = 'u' + Date.now();
+            const newUserObj = { id: newId, username: newUser, password: pwd || '123456', role };
+            users.push(newUserObj);
+            saveUsers();
+            currentUser = newUserObj;
+            saveCurrentUser();
+            renderAuth();
+            renderSellerPanel();
+            loadProducts();
+            showMessage(`注册成功！欢迎 ${newUser}`);
+        }
+    }
+    
+    function renderSellerPanel() {
+        sellerPanel.style.display = (currentUser && currentUser.role === 'seller') ? 'block' : 'none';
+    }
+    
+    // 底部联系方式（从 Supabase 获取，若无则用默认）
+    async function loadContacts() {
+        const { data, error } = await supabase.from('contacts').select('data').eq('id', 1).single();
+        let contacts = [];
+        if (!error && data) contacts = data.data;
+        else contacts = [{ type: '微信', value: 'ArtFlux_001' }, { type: '邮箱', value: 'design@artflux.com' }, { type: '电话', value: '+86 010 8899 2233' }];
+        const container = document.getElementById('contactInfo');
+        container.innerHTML = contacts.map(c => `<span><i class="fas ${c.type === '微信' ? 'fa-weixin' : (c.type === '邮箱' ? 'fa-envelope' : 'fa-phone-alt')}"></i> ${c.type}: ${escapeHtml(c.value)}</span>`).join('');
+    }
+    
+    // 轮播图
+    const track = document.getElementById('carouselTrack');
+    const slides = document.querySelectorAll('.carousel-slide');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const dotsContainer = document.getElementById('carouselDots');
+    let currentSlide = 0, slideCount = slides.length, autoInterval;
+    function updateCarousel() { track.style.transform = `translateX(-${currentSlide * 100}%)`; updateDots(); }
+    function updateDots() { document.querySelectorAll('.dot').forEach((dot, i) => { if(i===currentSlide) dot.classList.add('active'); else dot.classList.remove('active'); }); }
+    function createDots() {
+        dotsContainer.innerHTML = '';
+        for(let i=0;i<slideCount;i++) {
+            const dot = document.createElement('div');
+            dot.classList.add('dot');
+            if(i===currentSlide) dot.classList.add('active');
+            dot.addEventListener('click', () => { currentSlide = i; updateCarousel(); resetAutoPlay(); });
+            dotsContainer.appendChild(dot);
+        }
+    }
+    function nextSlide() { currentSlide = (currentSlide+1)%slideCount; updateCarousel(); resetAutoPlay(); }
+    function prevSlide() { currentSlide = (currentSlide-1+slideCount)%slideCount; updateCarousel(); resetAutoPlay(); }
+    function resetAutoPlay() { if(autoInterval) clearInterval(autoInterval); autoInterval = setInterval(nextSlide, 5000); }
+    if(slideCount) { createDots(); prevBtn.addEventListener('click', prevSlide); nextBtn.addEventListener('click', nextSlide); resetAutoPlay(); }
+    document.getElementById('mockAdBtn1')?.addEventListener('click', () => showMessage('🎨 限时活动：上传设计首单免佣金！'));
+    document.getElementById('mockAdBtn2')?.addEventListener('click', () => showMessage('✨ 浏览海量设计，点击购买支持独立创作者'));
+    document.getElementById('mockAdBtn3')?.addEventListener('click', () => showMessage('📞 联系邮箱 design@artflux.com 获取扶持政策'));
+    
+    // 启动
+    initUsers();
+    setupUpload();
+    loadCategories();
+    loadProducts();
+    loadContacts();
+</script>
+</body>
+</html>
